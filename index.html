@@ -21,7 +21,13 @@
 <body>
     <h1 id="target2">ブロック崩し</h1>
     <h2>ゲームは下をクリック</h2>
-    <p id="game">クリックしてくれや</p>
+    <button id="startButton">クリックしてくれや</button>
     <canvas id="myCanvas" width="480" height="320"></canvas>
+
+    <script>
+        document.getElementById('startButton').addEventListener('click', function () {
+            game(event);
+        });
+    </script>
 </body>
 </html>
