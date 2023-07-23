@@ -1,6 +1,27 @@
 // JavaScript source code
-window.onload = function () {
 
+// ランキングデータを取得する関数
+function fetchRanking() {
+    fetch("http://54.87.230.237/cgi-bin/server.php")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            let ranking = '';
+            data = data.filter(item => item.username !== null && item.score !== null);  // null値を持つオブジェクトをフィルタリングします。
+            for (let i = 0; i < data.length; i++) {
+                ranking += `#${i + 1} ${data[i].username}: ${data[i].score}\n`;
+            }
+            alert(`Current Ranking:\n${ranking}`);
+        })
+        .catch((error) => console.error('Error:', error));
+}
+
+window.onload = function () {
+    fetchRanking(); // ランキングの取得と表示
     let node_game = document.getElementById('game');
     node_game.onclick = game;
 }
@@ -146,7 +167,7 @@ function game(event) {
     function endGame(win) {
         let finalScore = score; //ゲームのスコアを設定します
         let username = prompt("Enter your name for the leaderboard:"); // ユーザー名を取得するために、プロンプトを表示します。
-        let serverURL = "http://localhost:3000/score"; // サーバーのURLを設定します。
+        let serverURL = "http://54.87.230.237/cgi-bin/server.php"; // サーバーのURLを設定します。
 
         fetch(serverURL, {
             method: 'POST',
@@ -158,8 +179,16 @@ function game(event) {
                 score: finalScore
             })
         })
-            .then(response => response.json())
-            .then(data => console.log('Response:', data))
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response:', data)
+                fetchRanking(); // ゲーム終了後、ランキングの取得と表示
+            })
             .catch((error) => console.error('Error:', error));
 
         if (win) {
@@ -167,6 +196,9 @@ function game(event) {
         } else {
             alert("GAME OVER");
         }
+
+        console.log("Sending score to server: ", finalScore);
+
         document.location.reload();
         clearInterval(interval); // Needed for Chrome to end game
     }
