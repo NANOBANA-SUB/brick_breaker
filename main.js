@@ -1,6 +1,27 @@
 // JavaScript source code
-window.onload = function () {
 
+// ランキングデータを取得する関数
+function fetchRanking() {
+    fetch("http://54.87.230.237/cgi-bin/server.php")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            let ranking = '';
+            data = data.filter(item => item.username !== null && item.score !== null);  // null値を持つオブジェクトをフィルタリングします。
+            for (let i = 0; i < data.length; i++) {
+                ranking += `#${i + 1} ${data[i].username}: ${data[i].score}\n`;
+            }
+            alert(`Current Ranking:\n${ranking}`);
+        })
+        .catch((error) => console.error('Error:', error));
+}
+
+window.onload = function () {
+    fetchRanking(); // ランキングの取得と表示
     let node_game = document.getElementById('game');
     node_game.onclick = game;
 }
@@ -16,6 +37,11 @@ function game(event) {
     let dx = 2;
     let dy = -2;
 
+    let score = 0;
+    let gameStartTime; // Add this to track start time
+    let gameEndTime;   // Add this to track end time
+
+    let lives = 3;
     //ボール
     const ballRadius = 10;
 
@@ -76,10 +102,31 @@ function game(event) {
                     if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
                         dy = -dy;
                         b.status = 0;
+                        score++;
+                        if (score === brickRowCount * brickColumnCount) {
+                            gameEndTime = Date.now(); // Add this to record the end time
+                            let elapsedTime = (gameEndTime - gameStartTime) / 1000; // Calculate elapsed time in seconds
+                            let finalScore = score / elapsedTime; // Calculate score based on elapsed time
+                            alert(`YOU WIN, CONGRATULATIONS! Your Score: ${finalScore.toFixed(2)}`);
+                            document.location.reload();
+                            clearInterval(interval); // Needed for Chrome to end game
+                        }
                     }
                 }
             }
         }
+    }
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText(`Score: ${score}`, 8, 20);
+    }
+
+    function drawLives() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
     }
 
 
@@ -116,6 +163,53 @@ function game(event) {
             }
         }
     }
+    // ゲーム終了時、スコア送信
+    function endGame(win) {
+        let finalScore = score; //ゲームのスコアを設定します
+        let username = prompt("Enter your name for the leaderboard:"); // ユーザー名を取得するために、プロンプトを表示します。
+        let serverURL = "http://54.87.230.237/cgi-bin/server.php"; // サーバーのURLを設定します。
+
+        fetch(serverURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                score: finalScore
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response:', data)
+                fetchRanking(); // ゲーム終了後、ランキングの取得と表示
+            })
+            .catch((error) => console.error('Error:', error));
+
+        if (win) {
+            alert("YOU WIN, CONGRATULATIONS!");
+        } else {
+            alert("GAME OVER");
+        }
+
+        console.log("Sending score to server: ", finalScore);
+
+        document.location.reload();
+        clearInterval(interval); // Needed for Chrome to end game
+    }
+
+    // 現在のゲーム終了時のコード部分
+    if (score === brickRowCount * brickColumnCount) {
+        endGame(true); // ユーザーが勝ったとき
+    } else if (!lives) {
+        endGame(false); // ユーザーが全てのライフを失ったとき
+    }
+
     function draw() {
 
         // 描画コード
@@ -124,7 +218,16 @@ function game(event) {
         drawBricks();
         drawBall();
         drawPaddle();
+        drawScore();
+        drawLives();
         collisionDetection();
+
+        // 以下の部分を追加
+        if (score === brickRowCount * brickColumnCount) {
+            endGame(true); // ユーザーが勝ったとき
+        } else if (!lives) {
+            endGame(false); // ユーザーが全てのライフを失ったとき
+        }
 
         if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
             dx = -dx;
@@ -135,9 +238,21 @@ function game(event) {
             if (x > paddleX && x < paddleX + paddleWidth) {
                 dy = -dy;
             } else {
-                alert("ゲームオーバー");
-                document.location.reload();
-                clearInterval(interval);
+                lives--;
+                if (!lives) {
+                    gameEndTime = Date.now(); // Add this to record the end time
+                    let elapsedTime = (gameEndTime - gameStartTime) / 1000; // Calculate elapsed time in seconds
+                    let finalScore = score / elapsedTime; // Calculate score based on elapsed time
+                    alert(`GAME OVER. Your Score: ${finalScore.toFixed(2)}`);
+                    document.location.reload();
+                    clearInterval(interval); // Needed for Chrome to end game
+                } else {
+                    x = canvas.width / 2;
+                    y = canvas.height - 30;
+                    dx = 2;
+                    dy = -2;
+                    paddleX = (canvas.width - paddleWidth) / 2;
+                }
             }
         }
 
@@ -159,5 +274,7 @@ function game(event) {
         y += dy;
 
     }
+
+    gameStartTime = Date.now(); // Add this to record the start time
     var interval = setInterval(draw, 10);
 }

@@ -5,8 +5,12 @@ VisualStudioVersion = 16.0.33423.256
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6CC2C3C7-1B88-40FD-AA4F-718BBF3C8627}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\Documents\index.html = ..\..\..\Documents\index.html
-		..\..\..\Documents\main.js = ..\..\..\Documents\main.js
+		hello.pl = hello.pl
+		index.html = index.html
+		main.js = main.js
+		server.php = server.php
+		test.php = test.php
+		testserver.pl = testserver.pl
 	EndProjectSection
 EndProject
 Global
