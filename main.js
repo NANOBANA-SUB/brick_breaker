@@ -2,7 +2,7 @@
 
 // ランキングデータを取得する関数
 function fetchRanking() {
-    fetch("http://54.87.230.237/cgi-bin/server.php")
+    fetch("http://3.86.249.20/cgi-bin/server.php")
         .then(response => {
             if (!response.ok) {
                 throw new Error("HTTP error " + response.status);
@@ -165,9 +165,12 @@ function game(event) {
     }
     // ゲーム終了時、スコア送信
     function endGame(win) {
-        let finalScore = score; //ゲームのスコアを設定します
+        gameEndTime = Date.now(); // Add this to record the end time
+        let elapsedTime = (gameEndTime - gameStartTime) / 1000; // Calculate elapsed time in seconds
+        let finalScore = (score / elapsedTime) * 10; // Calculate score based on elapsed time and multiply it by 10
+
         let username = prompt("Enter your name for the leaderboard:"); // ユーザー名を取得するために、プロンプトを表示します。
-        let serverURL = "http://54.87.230.237/cgi-bin/server.php"; // サーバーのURLを設定します。
+        let serverURL = "http://3.86.249.20/cgi-bin/server.php"; // サーバーのURLを設定します。
 
         fetch(serverURL, {
             method: 'POST',
@@ -176,7 +179,7 @@ function game(event) {
             },
             body: JSON.stringify({
                 username: username,
-                score: finalScore
+                score: finalScore.toFixed(2) // sending the float value rounded to 2 decimal places here
             })
         })
             .then(response => {
@@ -242,7 +245,7 @@ function game(event) {
                 if (!lives) {
                     gameEndTime = Date.now(); // Add this to record the end time
                     let elapsedTime = (gameEndTime - gameStartTime) / 1000; // Calculate elapsed time in seconds
-                    let finalScore = score / elapsedTime; // Calculate score based on elapsed time
+                    let finalScore = 10 * score / elapsedTime; // Calculate score based on elapsed time
                     alert(`GAME OVER. Your Score: ${finalScore.toFixed(2)}`);
                     document.location.reload();
                     clearInterval(interval); // Needed for Chrome to end game

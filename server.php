@@ -11,6 +11,10 @@
         case 'GET':
             if(file_exists($file_name)) {
                 $json_data = json_decode(file_get_contents($file_name), true);
+                // scores の列を抽出
+                $scores = array_column($json_data, 'score');
+                // scores の列でデータを降順に並べ替え
+                array_multisort($scores, SORT_DESC, $json_data);
                 echo json_encode($json_data);
             } else {
                 http_response_code(404);
